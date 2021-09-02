@@ -1,5 +1,18 @@
 const { Intents, ReactionUserManager, Channel, VoiceChannel } = require("discord.js");
 const ytdl = require("ytdl-core");
+const {
+	NoSubscriberBehavior,
+	StreamType,
+	createAudioPlayer,
+	createAudioResource,
+	entersState,
+	AudioPlayerStatus,
+	VoiceConnectionStatus,
+	joinVoiceChannel,
+} = require('@discordjs/voice');
+
+
+
 
 require("dotenv").config();
 
@@ -16,6 +29,20 @@ const servidores = {
 var queue = [50];
 var arg = [0];
 
+async function connectToChannel(channel) {
+	const connection = joinVoiceChannel({
+		channelId: channel.id,
+		guildId: channel.guild.id,
+		adapterCreator: channel.guild.voiceAdapterCreator,
+	});
+	try {
+		await entersState(connection, VoiceConnectionStatus.Ready, 30_000);
+		return connection;
+	} catch (error) {
+		connection.destroy();
+		throw error;
+	}
+}
 
 client.on('ready', () => {
     console.log(`${client.user.username} is now online ;)`);
@@ -23,6 +50,7 @@ client.on('ready', () => {
 
 //prefix verify
 client.on('messageCreate', async (message) => {
+    const guild = client.guilds.cache.get("601135111290748948");
     if (message.author.bot) return;
     if (message.content.startsWith(prefix)){
         const [cmd, ...args] = message.content.trim().substring(prefix.length).split(" ");
@@ -33,16 +61,27 @@ client.on('messageCreate', async (message) => {
             if(!message.member.voice.channel){  
                 message.channel.send('por favor entre em um canal ne camarada');
                 return;
-                }
+            }
             
-            //exports.run(args);
+            
             let url = args;
             if(!url) return message.channel.send("eitaaa, nao é isso nao");
 
             let verify = ytdl.validateURL(url);
             if(!verify) return message.channel.send("Precisa ser link do youtube amigao!");
-            message.channel.send('A musica selecionada tocara em breve');
-            let connection = await message.member.voice.channel.join(VoiceChannel);
+                message.channel.send('A musica selecionada tocara em breve');
+                const channel = message.member?.voice.channel;
+		        if (channel) {
+			    
+				const connection = await connectToChannel(channel);
+				
+		        } 
+		        
+            
+               
+            
+            
+            //let connection = await message.member.voice.channel.join();
             
 }
             
@@ -58,7 +97,7 @@ client.on('messageCreate', async (message) => {
             };*/
            
             
-            let dispatcher = connection.play(ytdl(url), {filter: 'audioonly', quality:'highest'});
+            //let dispatcher = connection.play(ytdl(url), {filter: 'audioonly', quality:'highest'});
 
             //message.channel.send(`[${song.title}][${song.url}] começou a tocar, seguuura`);
             message.channel.send(' começou a tocar, seguuura');
@@ -77,6 +116,8 @@ client.on('messageCreate', async (message) => {
     
 
 });
+
+
 
 
 
@@ -113,20 +154,24 @@ exports.help = {
 
 //dialog
 client.on('messageCreate', (message) => {
-    console.log(`[${message.author.tag}] sent [${message.content}]`);
     if (message.author.bot) return;
+    console.log(`[${message.author.tag}] sent [${message.content}]`);
+    
 
     
-    else if(message.content === 'o carrara eh gostoso?'){
+    if(message.content === 'o carrara eh gostoso?'){
         message.channel.send('mto');
         message.react('😍');
+        console.log(`Answered [${message.author.tag}] with mto and reacted with heart emote`);
     }else if (message.content === 'yorick'){
         
         message.channel.send('o mestre');
         message.react('🧙‍♂️');
+        console.log(`Answered [${message.author.tag}] with o mestre and reacted with mage emote`);
     }else if (message.content == 'miau'){
         message.channel.send('miau');
         message.react('🐱');
+        console.log(`Answered [${message.author.tag}] with miau and reacter with cat emote`);
     }
     
    
